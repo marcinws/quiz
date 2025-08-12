@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quiz taktyczny tenis - z punktacją</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background: #f9f9f9;
+  }
+  h1, h2 {
+    text-align: center;
+    color: #2c3e50;
+  }
+  .question {
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  .option {
+    display: block;  /* odpowiedzi jedna pod drugą */
+    margin: 0.6rem 0;
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+  .option:hover {
+    background-color: #eef6fb;
+    border-color: #3498db;
+  }
+  input[type="radio"] {
+    margin-right: 0.7rem;
+  }
+  button {
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    border: none;
+    background-color: #3498db;
+    color: white;
+  }
+  button:disabled {
+    background-color: #a3c5e8;
+    cursor: not-allowed;
+  }
+  .feedback {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 5px;
+    white-space: pre-line;
+  }
+  .correct {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  .incorrect {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+  #score {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #2c3e50;
+  }
+</style>
+</head>
+<body>
+
+<h1>Quiz taktyczny dla tenisistki</h1>
+
+<div id="quiz-container">
+  <div id="score">Punkty: 0 / 0</div>
+  <div id="question" class="question"></div>
+  <form id="options-form"></form>
+  <button id="submit-btn" disabled>Sprawdź odpowiedź</button>
+  <div id="feedback" class="feedback" style="display:none;"></div>
+  <button id="next-btn" style="display:none;">Następne pytanie</button>
+</div>
+
+<script>
+const quizData = [
+  {
+    question: 'Co oznacza "atakowanie drugiego serwisu"?',
+    options: [
+      'Uderzać mocno i szybko po słabszym serwisie przeciwnika',
+      'Czekać spokojnie na przeciwnika'
+    ],
+    answer: 0,
+    explanation: 'Atakujemy mocno i szybko po słabszym serwisie przeciwnika, aby przejąć inicjatywę.'
+  },
+  {
+    question: 'Jak możesz zmusić przeciwnika do popełnienia błędu?',
+    options: [
+      'Uderzać piłkę zawsze w to samo miejsce',
+      'Zmieniać kierunek i tempo uderzeń'
+    ],
+    answer: 1,
+    explanation: 'Zmiana kierunku i tempa dezorganizuje przeciwnika i wymusza błędy.'
+  },
+  {
+    question: 'Co zrobić, gdy przeciwnik lubi atakować przy siatce?',
+    options: [
+      'Uderzać lobem',
+      'Uderzać nisko przy siatce'
+    ],
+    answer: 0,
+    explanation: 'Lob pozwala ominąć przeciwnika stojącego przy siatce i zmusić go do biegania.'
+  },
+  {
+    question: 'Co warto zrobić, gdy przeciwnik często przesuwa się w prawo?',
+    options: [
+      'Uderzać piłki w lewy róg kortu',
+      'Uderzać piłki w prawy róg kortu'
+    ],
+    answer: 0,
+    explanation: 'Uderzenia w przeciwny róg kortu zmuszają go do biegania i osłabiają jego grę.'
+  },
+  {
+    question: 'Co powinno się zrobić po wygranym punkcie?',
+    options: [
+      'Skupić się na kolejnym punkcie',
+      'Myśleć o wygranej całego meczu'
+    ],
+    answer: 0,
+    explanation: 'Skupienie na kolejnym punkcie pomaga utrzymać koncentrację i rytm gry.'
+  },
+  {
+    question: 'Co zrobić, gdy przeciwnik jest bardzo szybki?',
+    options: [
+      'Uderzać mocno i szybko, żeby go zaskoczyć',
+      'Zmieniać tempo i kierunki uderzeń'
+    ],
+    answer: 1,
+    explanation: 'Zmiana tempa i kierunków dezorganizuje szybkie ruchy przeciwnika.'
+  },
+  {
+    question: 'Kiedy najlepiej użyć drop shota?',
+    options: [
+      'Gdy przeciwnik stoi daleko za linią bazową',
+      'Gdy przeciwnik jest blisko siatki'
+    ],
+    answer: 0,
+    explanation: 'Drop shot zmusza przeciwnika do szybkiego biegu do siatki, gdy stoi daleko.'
+  },
+  {
+    question: 'Jak grać, gdy przeciwnik jest wyższy i silniejszy?',
+    options: [
+      'Uderzać w jego nogi i zmieniać kierunki',
+      'Grać mocno z góry'
+    ],
+    answer: 0,
+    explanation: 'Celowanie w nogi i zmiana kierunków utrudnia silniejszemu zawodnikowi kontrolę.'
+  },
+  {
+    question: 'Co robić, gdy przegrywasz mecz?',
+    options: [
+      'Poddać się',
+      'Skupić się na kolejnych punktach i walczyć do końca'
+    ],
+    answer: 1,
+    explanation: 'Walka do końca i skupienie na kolejnych punktach pomaga odwrócić wynik.'
+  },
+  {
+    question: 'Co zrobić, gdy przeciwnik lubi grać długie wymiany?',
+    options: [
+      'Przyspieszyć grę i atakować',
+      'Grać spokojnie i cierpliwie'
+    ],
+    answer: 1,
+    explanation: 'Cierpliwa gra pomaga unikać błędów i zmęczyć przeciwnika.'
+  },
+  {
+    question: 'Gdzie najlepiej uderzyć, żeby zmusić przeciwnika do biegania?',
+    options: [
+      'W środek kortu',
+      'W oba rogi kortu na przemian'
+    ],
+    answer: 1,
+    explanation: 'Uderzenia na oba rogi zmuszają przeciwnika do dużej mobilności.'
+  },
+  {
+    question: 'Jaką postawę warto mieć podczas meczu?',
+    options: [
+      'Pewną siebie i skupioną',
+      'Zastanawiać się, czy wygram'
+    ],
+    answer: 0,
+    explanation: 'Pewność siebie i skupienie poprawiają wyniki na korcie.'
+  },
+  {
+    question: 'Co robić, gdy przeciwnik ma mocny forhend?',
+    options: [
+      'Uderzać w jego forhend',
+      'Uderzać w jego bekhend'
+    ],
+    answer: 1,
+    explanation: 'Celowanie w słabszy bekhend przeciwnika zwiększa szanse na zdobycie punktu.'
+  },
+  {
+    question: 'Co jest najważniejsze podczas meczu?',
+    options: [
+      'Wygrywać każdy punkt za wszelką cenę',
+      'Grać tak, by czerpać radość i uczyć się'
+    ],
+    answer: 1,
+    explanation: 'Czerpanie radości z gry i nauka są ważniejsze niż każdy punkt.'
+  },
+  {
+    question: 'Jak taktycznie grać, gdy przeciwnik ma słaby backhand?',
+    options: [
+      'Uderzać piłki głównie na jego backhand',
+      'Uderzać piłki na jego forehand',
+      'Grać tylko serwisami'
+    ],
+    answer: 0,
+    explanation: 'Wykorzystuj słabości przeciwnika — jeśli backhand jest słabszy, wysyłaj tam większość piłek. To wymusza błędy i pozwala kontrolować wymianę.'
+  },
+  {
+    question: 'Co zrobić, gdy przeciwnik uderza piłkę bardzo szybko?',
+    options: [
+      'Próbować grać agresywnie i mocno',
+      'Skupić się na obronie, grać spokojnie i cierpliwie',
+      'Zignorować i czekać na koniec wymiany'
+    ],
+    answer: 1,
+    explanation: 'Kiedy przeciwnik gra szybko, lepiej zachować spokój i skupienie. Cierpliwa gra pomaga unikać błędów i znaleźć okazję do kontrataku.'
+  },
+  {
+    question: 'Dlaczego warto zmieniać tempo uderzeń podczas wymiany?',
+    options: [
+      'Żeby zaskoczyć przeciwnika i wymusić błąd',
+      'Żeby zmęczyć się szybciej',
+      'Żeby zagrać wolniej i łatwiej'
+    ],
+    answer: 0,
+    explanation: 'Zmiana tempa dezorganizuje przeciwnika i zmusza go do błędu, bo trudno się dostosować do różnych szybkości piłki.'
+  }
+];
+
+let currentQuestionIndex = 0;
+let selectedAnswer = null;
+let score = 0;
+
+function updateScore() {
+  document.getElementById('score').textContent = `Punkty: ${score} / ${quizData.length}`;
+}
+
+function showQuestion() {
+  selectedAnswer = null;
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+  const submitBtn = document.getElementById('submit-btn');
+  submitBtn.disabled = true;
+  submitBtn.style.display = 'inline-block';
+
+  updateScore();
+
+  const questionObj = quizData[currentQuestionIndex];
+  document.getElementById('question').textContent = `Pytanie ${currentQuestionIndex + 1}: ${questionObj.question}`;
+
+  const optionsForm = document.getElementById('options-form');
+  optionsForm.innerHTML = '';
+
+  questionObj.options.forEach((option, index) => {
+    const label = document.createElement('label');
+    label.className = 'option';
+    label.innerHTML = `
+      <input type="radio" name="option" value="${index}" /> ${option}
+    `;
+    optionsForm.appendChild(label);
+  });
+
+  optionsForm.addEventListener('change', e => {
+    if (e.target.name === 'option') {
+      selectedAnswer = parseInt(e.target.value);
+      submitBtn.disabled = false;
+    }
+  }, { once: true });
+}
+
+function checkAnswer() {
+  const questionObj = quizData[currentQuestionIndex];
+  const feedbackDiv = document.getElementById('feedback');
+  const submitBtn = document.getElementById('submit-btn');
+  const nextBtn = document.getElementById('next-btn');
+
+  if (selectedAnswer === questionObj.answer) {
+    feedbackDiv.textContent = `Brawo! To poprawna odpowiedź.\n\n${questionObj.explanation}`;
+    feedbackDiv.className = 'feedback correct';
+    score++;
+  } else {
+    feedbackDiv.textContent = `Niestety, to niepoprawna odpowiedź.\n\nPoprawna to: "${questionObj.options[questionObj.answer]}".\n\n${questionObj.explanation}`;
+    feedbackDiv.className = 'feedback incorrect';
+  }
+
+  updateScore();
+  feedbackDiv.style.display = 'block';
+  submitBtn.style.display = 'none';
+  nextBtn.style.display = 'inline-block';
+}
+
+function showSummary() {
+  const quizContainer = document.getElementById('quiz-container');
+  const percentage = Math.round((score / quizData.length) * 100);
+
+  let message = '';
+  if (percentage === 100) {
+    message = 'Idealny wynik! Świetna robota!';
+  } else if (percentage >= 80) {
+    message = 'Bardzo dobry wynik! Gratulacje!';
+  } else if (percentage >= 50) {
+    message = 'Dobry wynik, ale jest jeszcze trochę do poprawy.';
+  } else {
+    message = 'Może spróbuj jeszcze raz, na pewno się uda!';
+  }
+
+  quizContainer.innerHTML = `
+    <h2>Podsumowanie quizu</h2>
+    <p>Zdobyłeś/aś <strong>${score}</strong> punktów z <strong>${quizData.length}</strong> możliwych.</p>
+    <p>To <strong>${percentage}%</strong>.</p>
+    <p>${message}</p>
+    <button id="restart-btn">Spróbuj ponownie</button>
+  `;
+
+  document.getElementById('restart-btn').addEventListener('click', () => {
+    // reset i start od nowa
+    currentQuestionIndex = 0;
+    score = 0;
+    selectedAnswer = null;
+    quizContainer.innerHTML = `
+      <div id="score">Punkty: 0 / ${quizData.length}</div>
+      <div id="question" class="question"></div>
+      <form id="options-form"></form>
+      <button id="submit-btn" disabled>Sprawdź odpowiedź</button>
+      <div id="feedback" class="feedback" style="display:none;"></div>
+      <button id="next-btn" style="display:none;">Następne pytanie</button>
+    `;
+    document.getElementById('submit-btn').addEventListener('click', () => {
+      checkAnswer();
+    });
+    document.getElementById('next-btn').addEventListener('click', () => {
+      nextQuestion();
+    });
+    showQuestion();
+  });
+}
+
+function nextQuestion() {
+  currentQuestionIndex++;
+  if (currentQuestionIndex >= quizData.length) {
+    showSummary();
+  } else {
+    showQuestion();
+  }
+}
+
+document.getElementById('submit-btn').addEventListener('click', () => {
+  checkAnswer();
+});
+
+document.getElementById('next-btn').addEventListener('click', () => {
+  nextQuestion();
+});
+
+showQuestion();
+
+</script>
+
+</body>
+</html>
